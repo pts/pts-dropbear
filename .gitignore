@@ -2,6 +2,7 @@
 *.o
 *.a
 *.pub
+hostkey_*
 dropbear_hostkey_*
 dropbear_*_host_key
 id_*
