@@ -7,7 +7,7 @@
 
 set -ex
 ./configure CC='xstatic gcc' --disable-syslog --disable-shadow --enable-bundled-libtom --disable-lastlog --disable-utmp --disable-utmpx --disable-wtmpx
-make PROGRAMS='dropbear dbclient dropbearkey dropbearconvert scp' MULTI=1 STATIC=1 SCPPROGRESS=1
+make PROGRAMS='dropbear dbclient dropbearkey dropbearconvert scp' MULTI=1 STATIC=1 SCPPROGRESS=1 NOSYSHOSTKEYLOAD=1
 strip dropbearmulti
 ls -l dropbearmulti
 

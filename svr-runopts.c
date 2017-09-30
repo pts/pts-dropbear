@@ -45,6 +45,7 @@ static void printhelp(const char * progname) {
 					" before user login\n"
 					"		(default: none)\n"
 					"-r keyfile  Specify hostkeys (repeatable)\n"
+#ifndef NOSYSHOSTKEYLOAD
 					"		defaults: \n"
 #ifdef DROPBEAR_DSS
 					"		dss %s\n"
@@ -55,8 +56,11 @@ static void printhelp(const char * progname) {
 #ifdef DROPBEAR_ECDSA
 					"		ecdsa %s\n"
 #endif
+#endif
+#ifndef NOSYSHOSTKEYLOAD
 #ifdef DROPBEAR_DELAY_HOSTKEY
 					"-R		Create hostkeys as required\n" 
+#endif
 #endif
 					"-F		Don't fork into background\n"
 #ifdef DISABLE_SYSLOG
@@ -97,6 +101,7 @@ static void printhelp(const char * progname) {
 					"-v		verbose (compiled with DEBUG_TRACE)\n"
 #endif
 					,DROPBEAR_VERSION, progname,
+#ifndef NOSYSHOSTKEYLOAD
 #ifdef DROPBEAR_DSS
 					DSS_PRIV_FILENAME,
 #endif
@@ -105,6 +110,7 @@ static void printhelp(const char * progname) {
 #endif
 #ifdef DROPBEAR_ECDSA
 					ECDSA_PRIV_FILENAME,
+#endif
 #endif
 					DROPBEAR_MAX_PORTS, DROPBEAR_DEFPORT, DROPBEAR_PIDFILE,
 					DEFAULT_RECV_WINDOW, DEFAULT_KEEPALIVE, DEFAULT_IDLE_TIMEOUT);
@@ -133,7 +139,11 @@ void svr_getopts(int argc, char ** argv) {
 	svr_opts.inetdmode = 0;
 	svr_opts.portcount = 0;
 	svr_opts.hostkey = NULL;
+#ifndef NOSYSHOSTKEYLOAD
+#ifdef DROPBEAR_DELAY_HOSTKEY
 	svr_opts.delay_hostkey = 0;
+#endif
+#endif
 	svr_opts.pidfile = DROPBEAR_PIDFILE;
 #ifdef ENABLE_SVR_LOCALTCPFWD
 	svr_opts.nolocaltcp = 0;
@@ -181,9 +191,13 @@ void svr_getopts(int argc, char ** argv) {
 				case 'r':
 					next = &keyfile;
 					break;
+#ifndef NOSYSHOSTKEYLOAD
+#ifdef DROPBEAR_DELAY_HOSTKEY
 				case 'R':
 					svr_opts.delay_hostkey = 1;
 					break;
+#endif
+#endif
 				case 'F':
 					svr_opts.forkbg = 0;
 					break;
@@ -429,7 +443,14 @@ static void loadhostkey(const char *keyfile, int fatal_duplicate) {
 	sign_key * read_key = new_sign_key();
 	enum signkey_type type = DROPBEAR_SIGNKEY_ANY;
 	if (readhostkey(keyfile, read_key, &type) == DROPBEAR_FAILURE) {
-		if (!svr_opts.delay_hostkey) {
+	if (1
+#ifndef NOSYSHOSTKEYLOAD
+#ifdef DROPBEAR_DELAY_HOSTKEY
+		&& !svr_opts.delay_hostkey
+#endif
+#endif
+	) {
+
 			dropbear_log(LOG_WARNING, "Failed loading %s", keyfile);
 		}
 	}
@@ -488,6 +509,7 @@ void load_all_hostkeys() {
 		m_free(hostkey_file);
 	}
 
+#ifndef NOSYSHOSTKEYLOAD
 #ifdef DROPBEAR_RSA
 	loadhostkey(RSA_PRIV_FILENAME, 0);
 #endif
@@ -499,11 +521,14 @@ void load_all_hostkeys() {
 #ifdef DROPBEAR_ECDSA
 	loadhostkey(ECDSA_PRIV_FILENAME, 0);
 #endif
+#endif
 
+#ifndef NOSYSHOSTKEYLOAD
 #ifdef DROPBEAR_DELAY_HOSTKEY
 	if (svr_opts.delay_hostkey) {
 		disable_unset_keys = 0;
 	}
+#endif
 #endif
 
 #ifdef DROPBEAR_RSA

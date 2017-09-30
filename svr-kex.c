@@ -85,6 +85,7 @@ void recv_msg_kexdh_init() {
 }
 
 
+#ifndef NOSYSHOSTKEYLOAD
 #ifdef DROPBEAR_DELAY_HOSTKEY
 
 static void svr_ensure_hostkey() {
@@ -152,6 +153,7 @@ out:
 	}
 }
 #endif
+#endif
 	
 /* Generate our side of the diffie-hellman key exchange value (dh_f), and
  * calculate the session key using the diffie-hellman algorithm. Following
@@ -166,11 +168,13 @@ static void send_msg_kexdh_reply(mp_int *dh_e, buffer *ecdh_qs) {
 	/* we can start creating the kexdh_reply packet */
 	CHECKCLEARTOWRITE();
 
+#ifndef NOSYSHOSTKEYLOAD
 #ifdef DROPBEAR_DELAY_HOSTKEY
 	if (svr_opts.delay_hostkey)
 	{
 		svr_ensure_hostkey();
 	}
+#endif
 #endif
 
 	buf_putbyte(ses.writepayload, SSH_MSG_KEXDH_REPLY);
