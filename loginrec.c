@@ -888,6 +888,7 @@ wtmp_write(struct logininfo *li, struct utmp *ut)
 {
 	struct stat buf;
 	int fd, ret = 1;
+	(void)li;
 
 	if ((fd = open(WTMP_FILE, O_WRONLY|O_APPEND, 0)) < 0) {
 		dropbear_log(LOG_WARNING, "wtmp_write: problem writing %s: %s",

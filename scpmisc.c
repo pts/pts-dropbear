@@ -158,7 +158,7 @@ addargs(arglist *args, char *fmt, ...)
 	if (args->list == NULL) {
 		nalloc = 32;
 		args->num = 0;
-	} else if (args->num+2 >= nalloc)
+	} else if (args->num+2U >= nalloc)
 		nalloc *= 2;
 
 	args->list = xrealloc(args->list, nalloc * sizeof(char *));
@@ -180,7 +180,7 @@ replacearg(arglist *args, u_int which, char *fmt, ...)
 	if (r == -1)
 		fatal("replacearg: argument too long");
 
-	if (which >= args->num)
+	if (which >= args->num + 0U)
 		fatal("replacearg: tried to replace invalid arg %d >= %d",
 		    which, args->num);
 	xfree(args->list[which]);
@@ -193,7 +193,7 @@ freeargs(arglist *args)
 	u_int i;
 
 	if (args->list != NULL) {
-		for (i = 0; i < args->num; i++)
+		for (i = 0; i < args->num + 0U; i++)
 			xfree(args->list[i]);
 		xfree(args->list);
 		args->nalloc = args->num = 0;

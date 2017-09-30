@@ -201,7 +201,10 @@ void svr_dropbear_log(int priority, const char* format, va_list param) {
 	char printbuf[1024];
 	char datestr[20];
 	time_t timesec;
+#ifndef DISABLE_SYSLOG
 	int havetrace = 0;
+#endif
+	(void)priority;
 
 	vsnprintf(printbuf, sizeof(printbuf), format, param);
 
@@ -213,8 +216,10 @@ void svr_dropbear_log(int priority, const char* format, va_list param) {
 
 	/* if we are using DEBUG_TRACE, we want to print to stderr even if
 	 * syslog is used, so it is included in error reports */
+#ifndef DISABLE_SYSLOG
 #ifdef DEBUG_TRACE
 	havetrace = debug_trace;
+#endif
 #endif
 
 #ifndef DISABLE_SYSLOG

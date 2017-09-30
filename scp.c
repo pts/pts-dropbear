@@ -129,7 +129,7 @@ do_local_cmd(arglist *a)
 
 	if (verbose_mode) {
 		fprintf(stderr, "Executing:");
-		for (i = 0; i < a->num; i++)
+		for (i = 0; i < a->num + 0U; i++)
 			fprintf(stderr, " %s", a->list[i]);
 		fprintf(stderr, "\n");
 	}
@@ -188,6 +188,7 @@ int
 do_cmd(char *host, char *remuser, char *cmd, int *fdin, int *fdout, int argc)
 {
 	int pin[2], pout[2], reserved[2];
+	(void)argc;
 
 	if (verbose_mode)
 		fprintf(stderr,
@@ -1033,7 +1034,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 				/* Keep reading so we stay sync'd up. */
 				if (wrerr == NO) {
 					if (atomicio(vwrite, ofd, bp->buf,
-					    count) != count) {
+					    count) + 0U != count) {
 						wrerr = YES;
 						wrerrno = errno;
 					}
@@ -1047,7 +1048,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			stop_progress_meter();
 #endif
 		if (count != 0 && wrerr == NO &&
-		    atomicio(vwrite, ofd, bp->buf, count) != count) {
+		    atomicio(vwrite, ofd, bp->buf, count) + 0U != count) {
 			wrerr = YES;
 			wrerrno = errno;
 		}
@@ -1244,6 +1245,7 @@ allocbuf(BUF *bp, int fd, int blksize)
 		bp->buf = xrealloc(bp->buf, size);
 	memset(bp->buf, 0, size);
 	bp->cnt = size;
+	(void)fd;
 	return (bp);
 }
 

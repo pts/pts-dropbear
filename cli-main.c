@@ -129,6 +129,7 @@ static void cli_dropbear_log(int priority,
 		const char* format, va_list param) {
 
 	char printbuf[1024];
+	(void)priority;
 
 	vsnprintf(printbuf, sizeof(printbuf), format, param);
 
