@@ -44,7 +44,7 @@ static void printhelp(const char * progname) {
 					"-b bannerfile	Display the contents of bannerfile"
 					" before user login\n"
 					"		(default: none)\n"
-					"-r keyfile  Specify hostkeys (repeatable)\n"
+					"-r keyfile	Specify hostkeys (repeatable)\n"
 #ifndef NOSYSHOSTKEYLOAD
 					"		defaults: \n"
 #ifdef DROPBEAR_DSS
@@ -65,7 +65,7 @@ static void printhelp(const char * progname) {
 					"-F		Don't fork into background\n"
 					"-E		Log to stderr rather than syslog\n"
 #ifdef DISABLE_SYSLOG
-					"(Syslog support not compiled in, always using stderr)\n"
+					"		(Syslog support not compiled in, always using stderr)\n"
 #endif
 #ifdef DO_MOTD
 					"-m		Don't display the motd on login\n"
@@ -87,15 +87,16 @@ static void printhelp(const char * progname) {
 					"		Listen on specified tcp port (and optionally address),\n"
 					"		up to %d can be specified\n"
 					"		(default port is %s if none specified)\n"
-					"-P PidFile	Create pid file PidFile\n"
+					"-P pidfile	Create PID file pidfile\n"
 					"		(default %s)\n"
 #ifdef INETD_MODE
 					"-i		Start for inetd\n"
 #endif
-					"-W <receive_window_buffer> (default %d, larger may be faster, max 1MB)\n"
-					"-K <keepalive>  (0 is never, default %d, in seconds)\n"
-					"-I <idle_timeout>  (0 is never, default %d, in seconds)\n"
-					"-V    Version\n"
+					"-W receive_window_buffer\n"
+					"		(default %d, larger may be faster, max 1MB)\n"
+					"-K keepalive	(0 is never, default %d, in seconds)\n"
+					"-I idle_timeout	(0 is never, default %d, in seconds)\n"
+					"-V		Print version and exit.\n"
 #ifdef DEBUG_TRACE
 					"-v		verbose (compiled with DEBUG_TRACE)\n"
 #endif
