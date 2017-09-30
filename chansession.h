@@ -76,6 +76,10 @@ struct ChanSess {
 #ifdef ENABLE_SVR_PUBKEY_OPTIONS
 	char *original_command;
 #endif
+
+	unsigned env_capacity;
+	unsigned env_size;
+	char **env;
 };
 
 struct ChildPid {

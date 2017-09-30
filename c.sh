@@ -15,7 +15,7 @@ ls -l dropbearmulti
 #
 #   $ ssh-keygen -t rsa -b 4096 -N '' -C hostkey_rsa4096 -f hostkey_rsa4096
 #   $ ./dropbearmulti dropbearconvert openssh dropbear hostkey_rsa4096 dropbear_hostkey_rsa4096
-#   $ ./dropbearmulti dropbear -r dropbear_hostkey_rsa4096 -F -E -m -s -P '' -p 65522
+#   $ ./dropbearmulti dropbear -r dropbear_hostkey_rsa4096 -F -E -m -s -P '' -A WINDOW=,TZ=,COLORFGBG=,LANG=,LC_ -p 65522
 #   ...
 #   $ ssh -v -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -F /dev/null -i ...  -p 65522 127.0.0.1 id
 #

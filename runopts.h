@@ -120,6 +120,8 @@ typedef struct svr_runopts {
 	buffer * banner;
 	char * pidfile;
 
+	char *acceptenv;  /* Comma-separated. */
+
 } svr_runopts;
 
 extern svr_runopts svr_opts;

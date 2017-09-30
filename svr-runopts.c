@@ -96,6 +96,7 @@ static void printhelp(const char * progname) {
 					"		(default %d, larger may be faster, max 1MB)\n"
 					"-K keepalive	(0 is never, default %d, in seconds)\n"
 					"-I idle_timeout	(0 is never, default %d, in seconds)\n"
+					"-A env1=,env2  Environment varialbe names and prefixes to accept\n"
 					"-V		Print version and exit.\n"
 #ifdef DEBUG_TRACE
 					"-v		verbose (compiled with DEBUG_TRACE)\n"
@@ -139,6 +140,7 @@ void svr_getopts(int argc, char ** argv) {
 	svr_opts.inetdmode = 0;
 	svr_opts.portcount = 0;
 	svr_opts.hostkey = NULL;
+	svr_opts.acceptenv = NULL;
 #ifndef NOSYSHOSTKEYLOAD
 #ifdef DROPBEAR_DELAY_HOSTKEY
 	svr_opts.delay_hostkey = 0;
@@ -190,6 +192,9 @@ void svr_getopts(int argc, char ** argv) {
 				case 'd':
 				case 'r':
 					next = &keyfile;
+					break;
+				case 'A':
+					next = &svr_opts.acceptenv;
 					break;
 #ifndef NOSYSHOSTKEYLOAD
 #ifdef DROPBEAR_DELAY_HOSTKEY

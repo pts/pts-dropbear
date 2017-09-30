@@ -61,6 +61,8 @@ static void send_msg_chansess_exitstatus(struct Channel * channel,
 static void send_msg_chansess_exitsignal(struct Channel * channel,
 		struct ChanSess * chansess);
 static void get_termmodes(struct ChanSess *chansess);
+static char *create_newvar(const char *param, const char *var);
+
 
 const struct ChanType svrchansess = {
 	0, /* sepfds */
@@ -305,6 +307,12 @@ static void closechansess(struct Channel *channel) {
 	m_free(chansess->original_command);
 #endif
 
+	if (chansess->env) {
+		char **p = chansess->env;
+		for (; *p; free(*p++)) {}
+		m_free(chansess->env);
+	}
+
 	if (chansess->tty) {
 		/* write the utmp/wtmp login record */
 		li = chansess_login_alloc(chansess);
@@ -337,6 +345,25 @@ static void closechansess(struct Channel *channel) {
 	m_free(chansess);
 
 	TRACE(("leave closechansess"))
+}
+
+static char is_env_allowed(const char *name) {
+	char const *p = svr_opts.acceptenv, *q;
+	if (!name || name[0] == '\0' || strchr(name, '=')) return 0;
+	/* Comma-separated, LC_ means prefix, TZ= means 1 var. */
+	if (p) for (; *p != '\0'; ) {
+		for (q = p; *q != '\0' && *q != ','; ++q) {}
+		if (p != q) {
+			if (q[-1] == '=') {
+				const unsigned size = q - p - 1;
+				if (0 == memcmp(name, p, size) && name[size] == '\0') return 1;
+			} else {
+				if (0 == strncmp(name, p, q - p)) return 1;	/* Prefix match. */
+			}
+		}
+		p = q + 1;
+	}
+	return 0;
 }
 
 /* Handle requests for a channel. These can be execution requests,
@@ -383,8 +410,25 @@ static void chansessionrequest(struct Channel *channel) {
 #endif
 	} else if (strcmp(type, "signal") == 0) {
 		ret = sessionsignal(chansess);
+	} else if (strcmp(type, "env") == 0) {
+		char *name = buf_getstring(ses.payload, NULL);
+		char *value = buf_getstring(ses.payload, NULL);
+		if (name && value && is_env_allowed(name)) {
+			char *newvar = create_newvar(name, value);
+			if (chansess->env_size + 1 >= chansess->env_capacity) {
+				if (chansess->env) {
+					chansess->env = m_realloc(chansess->env, sizeof(*chansess->env) * (chansess->env_capacity <<= 1));
+				} else {
+					chansess->env = m_malloc(sizeof(*chansess->env) * (chansess->env_capacity = 16));
+				}
+			}
+			chansess->env[chansess->env_size++] = newvar;  /* Takes ownership. */
+			chansess->env[chansess->env_size] = NULL;
+		}
+		m_free(value);
+		m_free(name);
 	} else {
-		/* etc, todo "env", "subsystem" */
+		/* etc */
 	}
 
 out:
@@ -943,6 +987,12 @@ static void execchild(void *user_data) {
 		}
 	}
 
+	/* Call putenv here first, so "USER" etc. below will override it. */
+	if (chansess->env) {
+	  char **p = chansess->env;
+	  for (; *p; putenv(*p++)) {}
+	}
+
 	/* set env vars */
 	addnewvar("USER", ses.authstate.pw_name);
 	addnewvar("LOGNAME", ses.authstate.pw_name);
@@ -1013,9 +1063,7 @@ void svr_chansessinitialise() {
 	
 }
 
-/* add a new environment variable, allocating space for the entry */
-void addnewvar(const char* param, const char* var) {
-
+static char *create_newvar(const char *param, const char *var) {
 	char* newvar = NULL;
 	int plen, vlen;
 
@@ -1027,8 +1075,13 @@ void addnewvar(const char* param, const char* var) {
 	newvar[plen] = '=';
 	memcpy(&newvar[plen+1], var, vlen);
 	newvar[plen+vlen+1] = '\0';
+	return newvar;
+}
+
+/* add a new environment variable, allocating space for the entry */
+void addnewvar(const char* param, const char* var) {
 	/* newvar is leaked here, but that's part of putenv()'s semantics */
-	if (putenv(newvar) < 0) {
+	if (putenv(create_newvar(param, var)) < 0) {
 		dropbear_exit("environ error");
 	}
 }
