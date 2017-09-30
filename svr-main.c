@@ -145,7 +145,11 @@ static void main_noinetd() {
 	if (svr_opts.forkbg) {
 		int closefds = 0;
 #ifndef DEBUG_TRACE
+#ifndef DISABLE_SYSLOG
 		if (!opts.usingsyslog) {
+#else
+		if (1) {
+#endif
 			closefds = 1;
 		}
 #endif

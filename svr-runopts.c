@@ -63,10 +63,9 @@ static void printhelp(const char * progname) {
 #endif
 #endif
 					"-F		Don't fork into background\n"
-#ifdef DISABLE_SYSLOG
-					"(Syslog support not compiled in, using stderr)\n"
-#else
 					"-E		Log to stderr rather than syslog\n"
+#ifdef DISABLE_SYSLOG
+					"(Syslog support not compiled in, always using stderr)\n"
 #endif
 #ifdef DO_MOTD
 					"-m		Don't display the motd on login\n"
@@ -201,11 +200,11 @@ void svr_getopts(int argc, char ** argv) {
 				case 'F':
 					svr_opts.forkbg = 0;
 					break;
-#ifndef DISABLE_SYSLOG
 				case 'E':
+#ifndef DISABLE_SYSLOG
 					opts.usingsyslog = 0;
-					break;
 #endif
+					break;
 #ifdef ENABLE_SVR_LOCALTCPFWD
 				case 'j':
 					svr_opts.nolocaltcp = 1;

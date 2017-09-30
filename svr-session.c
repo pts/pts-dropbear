@@ -217,7 +217,11 @@ void svr_dropbear_log(int priority, const char* format, va_list param) {
 	havetrace = debug_trace;
 #endif
 
+#ifndef DISABLE_SYSLOG
 	if (!opts.usingsyslog || havetrace) {
+#else
+	if (1) {
+#endif
 		struct tm * local_tm = NULL;
 		timesec = time(NULL);
 		local_tm = localtime(&timesec);
