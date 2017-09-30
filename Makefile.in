@@ -83,6 +83,8 @@ STRIP=@STRIP@
 INSTALL=@INSTALL@
 CPPFLAGS=@CPPFLAGS@
 CFLAGS+=-I. -I$(srcdir) $(CPPFLAGS) @CFLAGS@
+CFLAGS+=-Wextra -Werror -fno-strict-aliasing
+# No need to set, defaults: CFLAGS+=-Wno-missing-declarations -Wimplicit-function-declaration
 LIBS+=@LIBS@
 LDFLAGS=@LDFLAGS@
 
