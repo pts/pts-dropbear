@@ -166,7 +166,7 @@ static void main_noinetd() {
 	}
 
 	/* create a PID file so that we can be killed easily */
-	pidfile = fopen(svr_opts.pidfile, "w");
+	pidfile = svr_opts.pidfile[0] != '\0' ? fopen(svr_opts.pidfile, "w") : NULL;
 	if (pidfile) {
 		fprintf(pidfile, "%d\n", getpid());
 		fclose(pidfile);
@@ -193,7 +193,7 @@ static void main_noinetd() {
 		val = select(maxsock+1, &fds, NULL, NULL, NULL);
 
 		if (exitflag) {
-			unlink(svr_opts.pidfile);
+			if (svr_opts.pidfile[0] != '\0') unlink(svr_opts.pidfile);
 			dropbear_exit("Terminated by signal");
 		}
 		
