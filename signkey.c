@@ -39,8 +39,11 @@ static const char * const signkey_names[DROPBEAR_SIGNKEY_NUM_NAMED] = {
 #ifdef DROPBEAR_ECDSA
 	"ecdsa-sha2-nistp256",
 	"ecdsa-sha2-nistp384",
-	"ecdsa-sha2-nistp521"
+	"ecdsa-sha2-nistp521",
 #endif /* DROPBEAR_ECDSA */
+#ifdef DROPBEAR_ED25519
+	"ssh-ed25519",
+#endif
 };
 
 /* malloc a new sign_key and set the dss and rsa keys to NULL */
@@ -128,6 +131,10 @@ signkey_key_ptr(sign_key *key, enum signkey_type type) {
 		case DROPBEAR_SIGNKEY_DSS:
 			return (void**)&key->dsskey;
 #endif
+#ifdef DROPBEAR_ED25519
+		case DROPBEAR_SIGNKEY_ED25519:
+			return (void**)&key->ed25519key;
+#endif
 		default:
 			return NULL;
 	}
@@ -194,6 +201,16 @@ int buf_get_pub_key(buffer *buf, sign_key *key, enum signkey_type *type) {
 			if (*eck) {
 				ret = DROPBEAR_SUCCESS;
 			}
+		}
+	}
+#endif
+#ifdef DROPBEAR_ED25519
+	if (keytype == DROPBEAR_SIGNKEY_ED25519) {
+		ed25519_key_free(key->ed25519key);
+		key->ed25519key = m_malloc(sizeof(*key->ed25519key));
+		ret = buf_get_ed25519_pub_key(buf, key->ed25519key);
+		if (ret == DROPBEAR_FAILURE) {
+			m_free(key->ed25519key);
 		}
 	}
 #endif
@@ -266,6 +283,16 @@ int buf_get_priv_key(buffer *buf, sign_key *key, enum signkey_type *type) {
 		}
 	}
 #endif
+#ifdef DROPBEAR_ED25519
+	if (keytype == DROPBEAR_SIGNKEY_ED25519) {
+		ed25519_key_free(key->ed25519key);
+		key->ed25519key = m_malloc(sizeof(*key->ed25519key));
+		ret = buf_get_ed25519_priv_key(buf, key->ed25519key);
+		if (ret == DROPBEAR_FAILURE) {
+			m_free(key->ed25519key);
+		}
+	}
+#endif
 
 	TRACE2(("leave buf_get_priv_key"))
 
@@ -297,6 +324,11 @@ void buf_put_pub_key(buffer* buf, sign_key *key, enum signkey_type type) {
 		if (eck) {
 			buf_put_ecdsa_pub_key(pubkeys, *eck);
 		}
+	}
+#endif
+#ifdef DROPBEAR_ED25519
+	if (type == DROPBEAR_SIGNKEY_ED25519) {
+		buf_put_ed25519_pub_key(pubkeys, key->ed25519key);
 	}
 #endif
 	if (pubkeys->len == 0) {
@@ -338,6 +370,13 @@ void buf_put_priv_key(buffer* buf, sign_key *key, enum signkey_type type) {
 		}
 	}
 #endif
+#ifdef DROPBEAR_ED25519
+	if (type == DROPBEAR_SIGNKEY_ED25519) {
+		buf_put_ed25519_priv_key(buf, key->ed25519key);
+		TRACE(("leave buf_put_priv_key: ed25519 done"))
+		return;
+	}
+#endif
 	dropbear_exit("Bad key types in put pub key");
 }
 
@@ -375,6 +414,10 @@ void sign_key_free(sign_key *key) {
 		key->ecckey521 = NULL;
 	}
 #endif
+#endif
+#ifdef DROPBEAR_ED25519
+	ed25519_key_free(key->ed25519key);
+	key->ed25519key = NULL;
 #endif
 
 	m_free(key->filename);
@@ -500,6 +543,11 @@ void buf_put_sign(buffer* buf, sign_key *key, enum signkey_type type,
 		}
 	}
 #endif
+#ifdef DROPBEAR_ED25519
+	if (type == DROPBEAR_SIGNKEY_ED25519) {
+		buf_put_ed25519_sign(sigblob, key->ed25519key, data_buf);
+	}
+#endif
 	if (sigblob->len == 0) {
 		dropbear_exit("Non-matching signing type");
 	}
@@ -549,6 +597,14 @@ int buf_verify(buffer * buf, sign_key *key, buffer *data_buf) {
 		if (eck) {
 			return buf_ecdsa_verify(buf, *eck, data_buf);
 		}
+	}
+#endif
+#ifdef DROPBEAR_ED25519
+	if (type == DROPBEAR_SIGNKEY_ED25519) {
+		if (key->ed25519key == NULL) {
+			dropbear_exit("No ed25519 key to verify signature");
+		}
+		return buf_ed25519_verify(buf, key->ed25519key, data_buf);
 	}
 #endif
 

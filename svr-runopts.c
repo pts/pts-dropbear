@@ -489,6 +489,13 @@ static void loadhostkey(const char *keyfile, int fatal_duplicate) {
 	}
 #endif
 #endif /* DROPBEAR_ECDSA */
+
+#ifdef DROPBEAR_DSS
+	if (type == DROPBEAR_SIGNKEY_ED25519) {
+		loadhostkey_helper("ed25519", (void**)&read_key->ed25519key, (void**)&svr_opts.hostkey->ed25519key, fatal_duplicate);
+	}
+#endif
+
 	sign_key_free(read_key);
 	TRACE(("leave loadhostkey"))
 }
@@ -552,7 +559,6 @@ void load_all_hostkeys() {
 	}
 #endif
 
-
 #ifdef DROPBEAR_ECDSA
 #ifdef DROPBEAR_ECC_256
 	if ((disable_unset_keys || ECDSA_DEFAULT_SIZE != 256)
@@ -581,6 +587,14 @@ void load_all_hostkeys() {
 	}
 #endif
 #endif /* DROPBEAR_ECDSA */
+
+#ifdef DROPBEAR_ED25519
+	if (disable_unset_keys && !svr_opts.hostkey->ed25519key) {
+		disablekey(DROPBEAR_SIGNKEY_ED25519);
+	} else {
+		any_keys = 1;
+	}
+#endif
 
 	if (!any_keys) {
 		dropbear_exit("No hostkeys available. 'dropbear -R' may be useful or run dropbearkey.");

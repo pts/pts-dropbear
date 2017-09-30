@@ -245,6 +245,9 @@ algo_type sshhostkey[] = {
 #ifdef DROPBEAR_DSS
 	{"ssh-dss", DROPBEAR_SIGNKEY_DSS, NULL, 1, NULL},
 #endif
+#ifdef DROPBEAR_ED25519
+	{"ssh-ed25519", DROPBEAR_SIGNKEY_ED25519, NULL, 1, NULL},
+#endif
 	{NULL, 0, NULL, 0, NULL}
 };
 
