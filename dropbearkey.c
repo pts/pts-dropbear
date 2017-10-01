@@ -66,9 +66,19 @@
 
 static void printhelp(char * progname);
 
+static void printpubkey(sign_key * key, int keytype, const char *comment, const char *pub_filename_to_write);
+static int printpubfile(const char* filename, const char *comment, const char *pub_filename_to_write);
 
-static void printpubkey(sign_key * key, int keytype);
-static int printpubfile(const char* filename);
+static char *strdupcat3(const char *a, const char *b, const char *c) {
+	const size_t la = strlen(a);
+	const size_t lb = strlen(b);
+	const size_t lc = strlen(c);
+	char *result = m_malloc(la + lb + lc + 1);
+	strcpy(result, a);
+	strcpy(result + la, b);
+	strcpy(result + la + lb, c);
+	return result;
+}
 
 /* Print a help message */
 static void printhelp(char * progname) {
@@ -114,7 +124,9 @@ static void printhelp(char * progname) {
 					"		ed25519 has a fixed size of 256 bits\n"
 #endif
 					"-b bits		Same as -s. For ssh-keygen compatibility.\n"
+					"-N passhprase	Must be empty. For ssh-keygen compatibility.\n"
 					"-P passhprase	Must be empty. For ssh-keygen compatibility.\n"
+					"-C comment	Comment to use in the .pub file.\n"
 					"-y		Just print the publickey and fingerprint for the\n		private key in <filename>.\n"
 #ifdef DEBUG_TRACE
 					"-v		verbose\n"
@@ -136,6 +148,7 @@ int main(int argc, char ** argv) {
 	char * typetext = NULL;
 	char * sizetext = NULL;
 	char * passphrase = "";
+	char * comment = NULL;
 	unsigned int bits = 0;
 	int printpub = 0;
 
@@ -166,7 +179,11 @@ int main(int argc, char ** argv) {
 					next = &sizetext;
 					break;
 				case 'P':
+				case 'N':
 					next = &passphrase;
+					break;
+				case 'C':
+					next = &comment;
 					break;
 				case 'y':
 					printpub = 1;
@@ -200,8 +217,23 @@ int main(int argc, char ** argv) {
 		exit(EXIT_FAILURE);
 	}
 
+	if (!comment) {  /* Create a user@host comment. */
+		char * username = NULL;
+		char hostname[100];
+		struct passwd * pw = NULL;
+		username = "";
+		pw = getpwuid(getuid());
+		if (pw) {
+			username = pw->pw_name;
+		}
+		gethostname(hostname, sizeof(hostname));
+		hostname[sizeof(hostname)-1] = '\0';
+		/* We will leak comment. It's fine. */
+		comment = strdupcat3(username, "@", hostname);
+	}
+
 	if (printpub) {
-		int ret = printpubfile(filename);
+		int ret = printpubfile(filename, comment, NULL);
 		exit(ret);
 	}
 
@@ -256,13 +288,14 @@ int main(int argc, char ** argv) {
 		dropbear_exit("Failed to generate key.\n");
 	}
 
-	printpubfile(filename);
+	/* We will leak the result of strdupcat3 below. It's fine */
+	printpubfile(filename, comment, strdupcat3(filename, ".pub", ""));
 
 	return EXIT_SUCCESS;
 }
 #endif
 
-static int printpubfile(const char* filename) {
+static int printpubfile(const char *filename, const char *comment, const char *pub_filename_to_write) {
 
 	buffer *buf = NULL;
 	sign_key *key = NULL;
@@ -288,7 +321,7 @@ static int printpubfile(const char* filename) {
 		goto out;
 	}
 
-	printpubkey(key, keytype);
+	printpubkey(key, keytype, comment, pub_filename_to_write);
 
 	err = DROPBEAR_SUCCESS;
 
@@ -303,7 +336,7 @@ out:
 	return err;
 }
 
-static void printpubkey(sign_key * key, int keytype) {
+static void printpubkey(sign_key * key, int keytype, const char *comment, const char *pub_filename_to_write) {
 
 	buffer * buf = NULL;
 	unsigned char base64key[MAX_PUBKEY_SIZE*2];
@@ -312,9 +345,6 @@ static void printpubkey(sign_key * key, int keytype) {
 	const char * typestring = NULL;
 	char *fp = NULL;
 	int len;
-	struct passwd * pw = NULL;
-	char * username = NULL;
-	char hostname[100];
 
 	buf = buf_new(MAX_PUBKEY_SIZE);
 	buf_put_pub_key(buf, key, keytype);
@@ -326,29 +356,25 @@ static void printpubkey(sign_key * key, int keytype) {
 	err = base64_encode(buf_getptr(buf, len), len, base64key, &base64len);
 
 	if (err != CRYPT_OK) {
-		fprintf(stderr, "base64 failed");
+		dropbear_exit("base64 failed\n");
 	}
 
 	typestring = signkey_name_from_type(keytype, NULL);
 
 	fp = sign_key_fingerprint(buf_getptr(buf, len), len);
 
-	/* a user@host comment is informative */
-	username = "";
-	pw = getpwuid(getuid());
-	if (pw) {
-		username = pw->pw_name;
-	}
-
-	gethostname(hostname, sizeof(hostname));
-	hostname[sizeof(hostname)-1] = '\0';
-
 	fprintf(stderr, "Public key portion is:\n");
 	fflush(stderr);
-	printf("%s %s %s@%s\n", typestring, base64key, username, hostname);
+	printf("%s %s %s\n", typestring, base64key, comment);
 	fflush(stdout);
 	fprintf(stderr, "Fingerprint: %s\n", fp);
 	fflush(stderr);
+	if (pub_filename_to_write) {
+		FILE *f = fopen(pub_filename_to_write, "w");
+		if (!f) dropbear_exit("Cannot open .pub file: %s", pub_filename_to_write);
+		fprintf(f, "%s %s %s\n", typestring, base64key, comment);
+		fclose(f);
+	}
 
 	m_free(fp);
 	buf_free(buf);
