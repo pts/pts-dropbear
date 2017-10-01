@@ -44,8 +44,8 @@ dropbear_rsa_key * gen_rsa_priv_key(unsigned int size) {
 	DEF_MP_INT(qminus);
 	DEF_MP_INT(lcm);
 
-	if (size < 512 || size > 4096 || (size % 8 != 0)) {
-		dropbear_exit("Bits must satisfy 512 <= bits <= 4096, and be a"
+	if (size < 512 || size > 8192 || (size % 8 != 0)) {
+		dropbear_exit("Bits must satisfy 512 <= bits <= 8192, and be a"
 			" multiple of 8");
 	}
 
