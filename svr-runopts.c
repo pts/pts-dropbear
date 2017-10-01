@@ -456,7 +456,7 @@ static void loadhostkey(const char *keyfile, int fatal_duplicate) {
 #endif
 	) {
 
-			dropbear_log(LOG_WARNING, "Failed loading %s", keyfile);
+			dropbear_log(LOG_WARNING, "Failed loading hostkey %s", keyfile);
 		}
 	}
 

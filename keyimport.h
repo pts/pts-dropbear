@@ -35,6 +35,8 @@ enum {
 	KEYFILE_ANY,
 };
 
+sign_key *key_openssh_read(const char* filename, char *passphrase);
+
 int import_write(const char *filename, sign_key *key, char *passphrase,
 		int filetype);
 sign_key *import_read(const char *filename, char *passphrase, int filetype);

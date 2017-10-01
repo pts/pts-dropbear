@@ -30,6 +30,7 @@
 #include "auth.h"
 #include "algo.h"
 #include "dbrandom.h"
+#include "keyimport.h"
 
 runopts opts; /* GLOBAL */
 
@@ -46,6 +47,30 @@ int readhostkey(const char * filename, sign_key * hostkey,
 	if (buf_readfile(buf, filename) == DROPBEAR_FAILURE) {
 		goto out;
 	}
+#ifdef OPENSSHHOSTKEYLOAD
+	if (buf->len >= 4 && 0 == memcmp(buf->data, "----", 4)) {
+		sign_key *hostkey2;
+		buf_burn(buf);
+		buf_free(buf);
+		if (!(hostkey2 = key_openssh_read(filename, NULL))) {
+			return DROPBEAR_FAILURE;
+		}
+		/* We assume that hostkey is empty now, no need to free its
+		 * contents.
+		 */
+		*hostkey = *hostkey2;
+		free(hostkey2);
+		if (*type == DROPBEAR_SIGNKEY_ANY) {
+			*type = hostkey->type;
+		} else if (*type != hostkey->type) {
+			TRACE(("wrong key type: %d %d", *type, hostkey->type))
+			/* No way to free hostkey, we'll leak it. */
+			/* TODO(pts): Free fields without leaking memory, using sign_key_free, but not freeing the struct. */
+			return DROPBEAR_FAILURE;
+		}
+		return DROPBEAR_SUCCESS;
+	}
+#endif
 	buf_setpos(buf, 0);
 
 	addrandom(buf_getptr(buf, buf->len), buf->len);

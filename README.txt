@@ -11,19 +11,22 @@ The most important improvements in pts-dropbear:
   implementation is based on TweetNaCl v20140427.
 * Added environment variable propagation (similar to OpenSSH AcceptEnv,
   command-line flag -A) to Dropbear sshd.
+* Added option of autodetection and loading of OpenSSH hostkeys to Dropbear
+  sshd (with `make OPENSSHHOSTKEYLOAD=1').
 * Improved some command-line flags (e.g. dropbear -E is always available).
 * Compilation instructions for pts-xstatic (statically linked i386 Linux
   binary). Binary size is 350456 bytes.
-* Option to compile without loading any system keys (e.g. from
-  /etc/dropbear): `make NOSYSHOSTKEYLOAD=1'.
-* dropbearkey behavior is more compatible with ssh-keygen in OpenSSH:
+* Added option to compile without loading any system hostkeys (e.g. from
+  /etc/dropbear) (with `make NOSYSHOSTKEYLOAD=1').
+* Made dropbearkey behavior is more compatible with ssh-keygen in OpenSSH:
 ** dropbearkey now creates a .pub file.
 ** -b bits flag.
-** -C comment flag.
+** -C comment flag. (The comment will be added to the public key file, and
+   not to the private key file.)
 ** -P passphrase flag. Only the empty passhprase is allowed.
 ** -N passphrase flag. Only the empty passhprase is allowed.
-* dropbearconvert can autodetect the input private key file format (with
-  `dropbearconvert any').
+* Added autodection of the input private key file format, as
+  `dropbearconvert any'.
 
 How to generate an ssh-ed25519 server host key:
 
@@ -45,9 +48,8 @@ How to generate an ssh-ed25519 server host key:
 TODO:
 
 * Send patches to upstream Dropbear.
-* Add `dropbearconvert any openssh'.
-* Make dropbear able to read OpenSSH private host keys (with
-  `make READOPENSSHKEYS=1').
+* Add querying an ssh-agent to dbclient. (No need to write an ssh-agent,
+  the Gnome, gpg and OpenSSH ssh-agent implementations are fine.)
 * Add flag to dropbearkey to generate OpenSSH private key format (with
   `make WRITEOPENSSHKEYS=1'), `-Z openssh'.
 * refactor: split keywrite.c (import_write(...)) out keyimport.c, to make
@@ -60,5 +62,7 @@ FYI:
 * dropbearconvert (and import_read) ignores comments.
 * dropbearkey creates private keys without comments (only public keys have comments).
 * OpenSSH `ssh -i' ignores comments in the private key file.
+* dropbear doesn't support user or host key passphrases.
+* dbclient cannot authenticate with an ssh-agent.
 
 __END__

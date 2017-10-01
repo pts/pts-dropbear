@@ -53,7 +53,7 @@ static const unsigned char OID_SEC521R1_BLOB[] = {0x2b, 0x81, 0x04, 0x00, 0x23};
 	((unsigned long)(unsigned char)(cp)[3]))
 
 static int openssh_encrypted(const char *filename);
-static sign_key *openssh_read(const char *filename, char *passphrase);
+sign_key *key_openssh_read(const char *filename, char *passphrase);
 static int openssh_write(const char *filename, sign_key *key,
 				  char *passphrase);
 
@@ -86,7 +86,7 @@ int import_encrypted(const char* filename, int filetype) {
 sign_key *import_read(const char *filename, char *passphrase, int filetype) {
 
 		if (filetype == KEYFILE_OPENSSH) {
-				return openssh_read(filename, passphrase);
+				return key_openssh_read(filename, passphrase);
 		} else if (filetype == KEYFILE_DROPBEAR) {
 				return dropbear_read(filename);
 		} else if (filetype == KEYFILE_ANY) {
@@ -123,7 +123,7 @@ static sign_key *any_read(const char* filename, char *passphrase) {
 	if (0 == memcmp(header, "\0\0", 3) && (header[3] & 255) < 32) {
 		return dropbear_read(filename);
 	} else if (0 == memcmp(header, "----", 4)) {
-		return openssh_read(filename, passphrase);
+		return key_openssh_read(filename, passphrase);
 	}
 	/* TODO(pts): Use dropbear_log instead. */
 	fprintf(stderr, "Error: unrecognized private key file\n");
@@ -550,7 +550,7 @@ static int openssh_encrypted(const char *filename)
 	return ret;
 }
 
-static sign_key *openssh_read(const char *filename, char * UNUSED(passphrase))
+sign_key *key_openssh_read(const char *filename, char * UNUSED(passphrase))
 {
 		struct openssh_key *key;
 	unsigned char *p;
