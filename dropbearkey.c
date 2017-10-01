@@ -95,6 +95,8 @@ static void printhelp(char * progname) {
 #endif
 					"\n"
 #endif
+					"-b bits	Same as -s. For ssh-keygen compatibility.\n"
+					"-P passhprase	Must be empty. For ssh-keygen compatibility.\n"
 					"-y		Just print the publickey and fingerprint for the\n		private key in <filename>.\n"
 #ifdef DEBUG_TRACE
 					"-v		verbose\n"
@@ -139,6 +141,7 @@ int main(int argc, char ** argv) {
 	enum signkey_type keytype = DROPBEAR_SIGNKEY_NONE;
 	char * typetext = NULL;
 	char * sizetext = NULL;
+	char * passphrase = "";
 	unsigned int bits = 0;
 	int printpub = 0;
 
@@ -164,8 +167,12 @@ int main(int argc, char ** argv) {
 				case 't':
 					next = &typetext;
 					break;
+				case 'b':
 				case 's':
 					next = &sizetext;
+					break;
+				case 'P':
+					next = &passphrase;
 					break;
 				case 'y':
 					printpub = 1;
@@ -186,6 +193,11 @@ int main(int argc, char ** argv) {
 					break;
 			}
 		}
+	}
+
+	if (passphrase[0]) {
+		fprintf(stderr, "Only empty passphrase (-P) is supported.\n");
+		exit(EXIT_FAILURE);
 	}
 
 	if (!filename) {
