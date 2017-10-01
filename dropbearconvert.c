@@ -45,6 +45,7 @@ static void printhelp(char * progname) {
 					"All parameters must be specified in order.\n"
 					"\n"
 					"The input and output types are one of:\n"
+					"any (for input only)\n"
 					"openssh\n"
 					"dropbear\n"
 					"\n"
@@ -83,6 +84,8 @@ int main(int argc, char ** argv) {
 		intype = KEYFILE_DROPBEAR;
 	} else if (argv[1][0] == 'o') {
 		intype = KEYFILE_OPENSSH;
+	} else if (argv[1][0] == 'a') {
+		intype = KEYFILE_ANY;
 	} else {
 		fprintf(stderr, "Invalid input key type\n");
 		goto usage;

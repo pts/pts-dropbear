@@ -60,6 +60,8 @@ static int openssh_write(const char *filename, sign_key *key,
 static int dropbear_write(const char*filename, sign_key * key);
 static sign_key *dropbear_read(const char* filename);
 
+static sign_key *any_read(const char* filename, char *passphrase);
+
 static int toint(unsigned u);
 
 #if 0
@@ -87,6 +89,8 @@ sign_key *import_read(const char *filename, char *passphrase, int filetype) {
 				return openssh_read(filename, passphrase);
 		} else if (filetype == KEYFILE_DROPBEAR) {
 				return dropbear_read(filename);
+		} else if (filetype == KEYFILE_ANY) {
+				return any_read(filename, passphrase);
 #if 0
 		} else if (filetype == KEYFILE_SSHCOM) {
 				return sshcom_read(filename, passphrase);
@@ -108,6 +112,22 @@ int import_write(const char *filename, sign_key *key, char *passphrase,
 #endif
 		}
 	return 0;
+}
+
+static sign_key *any_read(const char* filename, char *passphrase) {
+	char header[4];
+	int fd = open(filename, O_RDONLY);
+	if (fd < 0) return NULL;
+	if (4 != read(fd, header, 4)) { close(fd); return NULL; }
+	close(fd);
+	if (0 == memcmp(header, "\0\0", 3) && (header[3] & 255) < 32) {
+		return dropbear_read(filename);
+	} else if (0 == memcmp(header, "----", 4)) {
+		return openssh_read(filename, passphrase);
+	}
+	/* TODO(pts): Use dropbear_log instead. */
+	fprintf(stderr, "Error: unrecognized private key file\n");
+	return NULL;
 }
 
 static sign_key *dropbear_read(const char* filename) {

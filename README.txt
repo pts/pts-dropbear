@@ -22,6 +22,8 @@ The most important improvements in pts-dropbear:
 ** -C comment flag.
 ** -P passphrase flag. Only the empty passhprase is allowed.
 ** -N passphrase flag. Only the empty passhprase is allowed.
+* dropbearconvert can autodetect the input private key file format (with
+  `dropbearconvert any').
 
 How to generate an ssh-ed25519 server host key:
 

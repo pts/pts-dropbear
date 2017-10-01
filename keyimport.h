@@ -31,7 +31,8 @@
 enum {
 	KEYFILE_DROPBEAR,
 	KEYFILE_OPENSSH,
-	KEYFILE_SSHCOM
+	KEYFILE_SSHCOM,
+	KEYFILE_ANY,
 };
 
 int import_write(const char *filename, sign_key *key, char *passphrase,
