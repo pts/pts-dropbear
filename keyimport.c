@@ -54,8 +54,7 @@ static const unsigned char OID_SEC521R1_BLOB[] = {0x2b, 0x81, 0x04, 0x00, 0x23};
 
 static int openssh_encrypted(const char *filename);
 sign_key *key_openssh_read(const char *filename, char *passphrase);
-static int openssh_write(const char *filename, sign_key *key,
-				  char *passphrase);
+int key_openssh_write(const char *filename, sign_key *key, char *passphrase, buffer **outbuf);
 
 static int dropbear_write(const char*filename, sign_key * key);
 static sign_key *dropbear_read(const char* filename);
@@ -103,7 +102,7 @@ int import_write(const char *filename, sign_key *key, char *passphrase,
 				int filetype) {
 
 		if (filetype == KEYFILE_OPENSSH) {
-				return openssh_write(filename, key, passphrase);
+				return key_openssh_write(filename, key, passphrase, NULL);
 		} else if (filetype == KEYFILE_DROPBEAR) {
 				return dropbear_write(filename, key);
 #if 0
@@ -232,6 +231,28 @@ static void base64_encode_fp(FILE * fp, unsigned char *data,
 				fputc('\n', fp);
 		}
 }
+
+#ifdef WRITEOPENSSHKEYS
+/* cpl has to be less than 100 */
+static void base64_encode_to_buf(buffer *buf, unsigned char *data, int datalen, int cpl) {
+	unsigned char out[100];
+	int n;
+	unsigned long outlen;
+	int rawcpl;
+	rawcpl = cpl * 3 / 4;
+	dropbear_assert((unsigned int)cpl < sizeof(out));
+	while (datalen > 0) {
+			n = (datalen < rawcpl ? datalen : rawcpl);
+			outlen = sizeof(out);
+			base64_encode(data, n, out, &outlen);
+			data += n;
+			datalen -= n;
+			buf_putbytes(buf, out, outlen);
+			buf_putbytes(buf, "\n", 1);
+	}
+}
+#endif
+
 /*
  * Read an ASN.1/BER identifier and length pair.
  * 
@@ -893,9 +914,7 @@ sign_key *key_openssh_read(const char *filename, char * UNUSED(passphrase))
 	return retval;
 }
 
-static int openssh_write(const char *filename, sign_key *key,
-				  char *passphrase)
-{
+int key_openssh_write(const char *filename, sign_key *key, char *passphrase, buffer **outbuf) {
 		buffer * keyblob = NULL;
 		buffer * extrablob = NULL; /* used for calculated values to write */
 		unsigned char *outblob = NULL;
@@ -910,6 +929,7 @@ static int openssh_write(const char *filename, sign_key *key,
 #ifdef DROPBEAR_RSA
 		mp_int dmp1, dmq1, iqmp, tmpval; /* for rsa */
 #endif
+
 
 #ifdef DROPBEAR_ED25519
 	if (key->type == DROPBEAR_SIGNKEY_ED25519) {
@@ -1240,6 +1260,24 @@ static int openssh_write(const char *filename, sign_key *key,
 
 #ifdef DROPBEAR_ED25519
 	write_file:
+#endif
+
+#ifdef WRITEOPENSSHKEYS
+	if (outbuf) {
+		const unsigned header_size = strlen(header);
+		const unsigned footer_size = strlen(footer);
+		const unsigned outlen3 = outlen / 3;
+		buffer *xbuf;
+		/* (outlen3 >> 4) for the '\n' inserted by base64 encoding, it corresponds to the constant 64 below. */
+		*outbuf = xbuf = buf_new(header_size + footer_size + outlen + outlen3 + (outlen3 >> 4) + 10);
+		buf_putbytes(xbuf, header, header_size);
+		base64_encode_to_buf(xbuf, outblob, outlen, 64);
+		buf_putbytes(xbuf, footer, footer_size);
+		ret = 1;
+		goto error;
+	}
+#else
+	(void)outbuf;
 #endif
 
 	/*

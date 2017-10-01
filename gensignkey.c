@@ -7,6 +7,7 @@
 #include "gened25519.h"
 #include "signkey.h"
 #include "dbrandom.h"
+#include "keyimport.h"
 
 #define RSA_DEFAULT_SIZE 2048
 #define DSS_DEFAULT_SIZE 1024
@@ -82,7 +83,7 @@ static int get_default_bits(enum signkey_type keytype)
 }
 
 /* if skip_exist is set it will silently return if the key file exists */
-int signkey_generate(enum signkey_type keytype, int bits, const char* filename, int skip_exist)
+int signkey_generate(enum signkey_type keytype, int bits, const char* filename, int skip_exist, int format)
 {
 	sign_key * key = NULL;
 	buffer *buf = NULL;
@@ -132,17 +133,22 @@ int signkey_generate(enum signkey_type keytype, int bits, const char* filename, 
 
 	seedrandom();
 
-	buf = buf_new(MAX_PRIVKEY_SIZE); 
-
-	buf_put_priv_key(buf, key, keytype);
+#ifdef WRITEOPENSSHKEYS
+	if (format == KEYFILE_OPENSSH) {
+		key->type = keytype;
+		if (!key_openssh_write(NULL, key, NULL, &buf)) goto out;
+	} else
+#endif
+	{
+		buf = buf_new(MAX_PRIVKEY_SIZE);
+		buf_put_priv_key(buf, key, keytype);
+	}
 	sign_key_free(key);
 	key = NULL;
 	buf_setpos(buf, 0);
-
 	fn_temp = m_malloc(strlen(filename) + 30);
 	snprintf(fn_temp, strlen(filename)+30, "%s.tmp%d", filename, getpid());
 	ret = buf_writefile(buf, fn_temp);
-
 	if (ret == DROPBEAR_FAILURE) {
 		goto out;
 	}

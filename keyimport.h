@@ -36,6 +36,8 @@ enum {
 };
 
 sign_key *key_openssh_read(const char* filename, char *passphrase);
+/* If outbuf is not NULL, then writes outbuf, else writes to file named filename. */
+int key_openssh_write(const char *filename, sign_key *key, char *passphrase, buffer **outbuf);
 
 int import_write(const char *filename, sign_key *key, char *passphrase,
 		int filetype);

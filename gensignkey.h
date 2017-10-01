@@ -3,6 +3,7 @@
 
 #include "signkey.h"
 
-int signkey_generate(enum signkey_type type, int bits, const char* filename, int skip_exist);
+/* format is KEYFILE_DROPBEAR or KEYFILE_OPENSSH */
+int signkey_generate(enum signkey_type type, int bits, const char* filename, int skip_exist, int format);
 
 #endif

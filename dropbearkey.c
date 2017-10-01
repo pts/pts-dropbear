@@ -63,6 +63,7 @@
 #include "crypto_desc.h"
 #include "dbrandom.h"
 #include "gensignkey.h"
+#include "keyimport.h"
 
 static void printhelp(char * progname);
 
@@ -127,6 +128,9 @@ static void printhelp(char * progname) {
 					"-N passhprase	Must be empty. For ssh-keygen compatibility.\n"
 					"-P passhprase	Must be empty. For ssh-keygen compatibility.\n"
 					"-C comment	Comment to use in the .pub file.\n"
+#ifdef WRITEOPENSSHKEYS
+					"-Z format	Output key format: dropbear (default) or openssh.\n"
+#endif
 					"-y		Just print the publickey and fingerprint for the\n		private key in <filename>.\n"
 #ifdef DEBUG_TRACE
 					"-v		verbose\n"
@@ -151,6 +155,10 @@ int main(int argc, char ** argv) {
 	char * comment = NULL;
 	unsigned int bits = 0;
 	int printpub = 0;
+	char * format_str = NULL;
+#ifdef WRITEOPENSSHKEYS
+	int format = KEYFILE_DROPBEAR;
+#endif
 
 	crypto_init();
 	seedrandom();
@@ -185,6 +193,11 @@ int main(int argc, char ** argv) {
 				case 'C':
 					next = &comment;
 					break;
+#ifdef WRITEOPENSSHKEYS
+				case 'Z':
+					next = &format_str;
+					break;
+#endif
 				case 'y':
 					printpub = 1;
 					break;
@@ -231,6 +244,12 @@ int main(int argc, char ** argv) {
 		/* We will leak comment. It's fine. */
 		comment = strdupcat3(username, "@", hostname);
 	}
+
+#ifdef WRITEOPENSSHKEYS
+	if (format_str && format_str[0] == 'o') {
+		format = KEYFILE_OPENSSH;
+	}
+#endif
 
 	if (printpub) {
 		int ret = printpubfile(filename, comment, NULL);
@@ -283,7 +302,7 @@ int main(int argc, char ** argv) {
 	}
 
 	fprintf(stderr, "Generating key, this may take a while...\n");
-	if (signkey_generate(keytype, bits, filename, 0) == DROPBEAR_FAILURE)
+	if (signkey_generate(keytype, bits, filename, 0, format) == DROPBEAR_FAILURE)
 	{
 		dropbear_exit("Failed to generate key.\n");
 	}
@@ -311,14 +330,23 @@ static int printpubfile(const char *filename, const char *comment, const char *p
 		goto out;
 	}
 
-	key = new_sign_key();
-	keytype = DROPBEAR_SIGNKEY_ANY;
-
-	buf_setpos(buf, 0);
-	ret = buf_get_priv_key(buf, key, &keytype);
-	if (ret == DROPBEAR_FAILURE) {
-		fprintf(stderr, "Bad key in '%s'\n", filename);
-		goto out;
+#ifdef WRITEOPENSSHKEYS
+	if (buf->len >= 4 && 0 == memcmp(buf->data, "----", 4)) {
+		buf_burn(buf);
+		buf_free(buf);
+		if (!(key = key_openssh_read(filename, NULL))) goto out;
+		keytype = key->type;
+	} else
+#endif
+	{
+		key = new_sign_key();
+		keytype = DROPBEAR_SIGNKEY_ANY;
+		buf_setpos(buf, 0);
+		ret = buf_get_priv_key(buf, key, &keytype);
+		if (ret == DROPBEAR_FAILURE) {
+			fprintf(stderr, "Bad key in '%s'\n", filename);
+			goto out;
+		}
 	}
 
 	printpubkey(key, keytype, comment, pub_filename_to_write);
