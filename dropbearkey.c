@@ -319,8 +319,12 @@ static void printpubkey(sign_key * key, int keytype) {
 	gethostname(hostname, sizeof(hostname));
 	hostname[sizeof(hostname)-1] = '\0';
 
-	printf("Public key portion is:\n%s %s %s@%s\nFingerprint: %s\n",
-			typestring, base64key, username, hostname, fp);
+	fprintf(stderr, "Public key portion is:\n");
+	fflush(stderr);
+	printf("%s %s %s@%s\n", typestring, base64key, username, hostname);
+	fflush(stdout);
+	fprintf(stderr, "Fingerprint: %s\n", fp);
+	fflush(stderr);
 
 	m_free(fp);
 	buf_free(buf);
