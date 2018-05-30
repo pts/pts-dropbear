@@ -13,6 +13,29 @@ def lcm(a, b):
   return a / gcd(a, b) * b
 
 
+def modinv(a, b):
+  a0, b0 = a, b
+  if b <= 0:
+    raise ValueError('Modulus must be positive, got args: ' + repr((a0, b0)))
+  a %= b
+  if a < 0:
+    a += b
+  x0, x1 = 0, 1
+  if a == 0:
+    if b == 1:
+      return 0
+    raise ValueError('No modular inverse of 0: ' + repr((a0, b0)))
+  while a > 1:
+    assert -b0 <= x0 < b0
+    assert -b0 <= x1 < b0
+    assert 1 < a <= b0
+    assert 0 <= b <= b0
+    if not b:
+      raise ValueError('No modular inverse, not coprime: ' + repr((a0, b0)))
+    x0, x1, a, b = x1 - a / b * x0, x0, b, a % b
+  return x1 + (x1 < 0 and b0)
+
+
 def parse_dropbear_rsa_private_key(data):
   if not data.startswith('\x00\x00\x00\x07ssh-rsa'):
     raise ValueError('Bad Dropbear ssh-rsa key type.')
@@ -42,6 +65,8 @@ def parse_dropbear_rsa_private_key(data):
     m = lcm(key['p'] - 1, key['q'] - 1)
     if key['e'] * key['d'] % m != 1:
       raise ValueError('Invalid RSA private key, expected 1 == e * d % m.')
+    if key['d'] != modinv(key['e'], m):
+      raise ValueError('Invalid RSA private key, expected d == modinv(e, m).')
   # Typical bit sizes for a 3072-bit RSA key (ssh-keygen -t rsa -b 3072): ('e', 24), ('n', 3080), ('d', 3072), ('p', 1544), ('q', 1544).
   # Typical value for e: 65537.
   # TODO(pts): Check that p and q are primes.
