@@ -140,6 +140,7 @@ int signkey_generate(enum signkey_type keytype, int bits, const char* filename, 
 	} else
 #endif
 	{
+		(void)format;
 		buf = buf_new(MAX_PRIVKEY_SIZE);
 		buf_put_priv_key(buf, key, keytype);
 	}

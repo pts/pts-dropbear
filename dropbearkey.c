@@ -155,10 +155,10 @@ int main(int argc, char ** argv) {
 	char * comment = NULL;
 	unsigned int bits = 0;
 	int printpub = 0;
-	char * format_str = NULL;
 #ifdef WRITEOPENSSHKEYS
-	int format = KEYFILE_DROPBEAR;
+	char * format_str = NULL;
 #endif
+	int format = KEYFILE_DROPBEAR;
 
 	crypto_init();
 	seedrandom();
