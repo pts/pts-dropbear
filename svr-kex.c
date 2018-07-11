@@ -36,6 +36,7 @@
 #include "runopts.h"
 #include "ecc.h"
 #include "gensignkey.h"
+#include "keyimport.h"
 
 static void send_msg_kexdh_reply(mp_int *dh_e, buffer *ecdh_qs);
 
@@ -126,7 +127,7 @@ static void svr_ensure_hostkey() {
 		return;
 	}
 
-	if (signkey_generate(type, 0, fn, 1) == DROPBEAR_FAILURE) {
+	if (signkey_generate(type, 0, fn, 1, KEYFILE_DROPBEAR) == DROPBEAR_FAILURE) {
 		goto out;
 	}
 	
