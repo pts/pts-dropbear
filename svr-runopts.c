@@ -597,6 +597,10 @@ void load_all_hostkeys() {
 #endif
 
 	if (!any_keys) {
+#if !defined(NOSYSHOSTKEYLOAD) && defined(DROPBEAR_DELAY_HOSTKEY)
 		dropbear_exit("No hostkeys available. 'dropbear -R' may be useful or run dropbearkey.");
+#else
+		dropbear_exit("No hostkeys available. Generate them and specify them as 'dropbear -r ...'.");
+#endif
 	}
 }
