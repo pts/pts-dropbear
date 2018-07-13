@@ -604,7 +604,7 @@ source(int argc, char **argv)
 	static BUF buffer;
 	BUF *bp;
 	off_t i, amt, statbytes;
-	size_t result;
+	ssize_t result;
 	int fd = -1, haderr, indx;
 	char *last, *name, buf[2048];
 	int len;
@@ -1033,8 +1033,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			if (count == bp->cnt) {
 				/* Keep reading so we stay sync'd up. */
 				if (wrerr == NO) {
-					if (atomicio(vwrite, ofd, bp->buf,
-					    count) + 0U != count) {
+					if ((size_t)atomicio(vwrite, ofd, bp->buf, count) != count) {
 						wrerr = YES;
 						wrerrno = errno;
 					}
@@ -1048,7 +1047,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			stop_progress_meter();
 #endif
 		if (count != 0 && wrerr == NO &&
-		    atomicio(vwrite, ofd, bp->buf, count) + 0U != count) {
+		    (size_t)atomicio(vwrite, ofd, bp->buf, count) != count) {
 			wrerr = YES;
 			wrerrno = errno;
 		}
