@@ -327,6 +327,8 @@ static int printpubfile(const char *filename, const char *comment, const char *p
 
 	if (ret != DROPBEAR_SUCCESS) {
 		fprintf(stderr, "Failed reading '%s'\n", filename);
+		buf_burn(buf);
+		buf_free(buf);
 		goto out;
 	}
 
@@ -343,6 +345,8 @@ static int printpubfile(const char *filename, const char *comment, const char *p
 		keytype = DROPBEAR_SIGNKEY_ANY;
 		buf_setpos(buf, 0);
 		ret = buf_get_priv_key(buf, key, &keytype);
+		buf_burn(buf);
+		buf_free(buf);
 		if (ret == DROPBEAR_FAILURE) {
 			fprintf(stderr, "Bad key in '%s'\n", filename);
 			goto out;
@@ -354,9 +358,6 @@ static int printpubfile(const char *filename, const char *comment, const char *p
 	err = DROPBEAR_SUCCESS;
 
 out:
-	buf_burn(buf);
-	buf_free(buf);
-	buf = NULL;
 	if (key) {
 		sign_key_free(key);
 		key = NULL;
