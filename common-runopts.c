@@ -47,8 +47,8 @@ int readhostkey(const char * filename, sign_key * hostkey,
 	if (buf_readfile(buf, filename) == DROPBEAR_FAILURE) {
 		goto out;
 	}
-#ifdef OPENSSHHOSTKEYLOAD
 	if (buf->len >= 4 && 0 == memcmp(buf->data, "----", 4)) {
+#ifdef OPENSSHHOSTKEYLOAD
 		sign_key *hostkey2;
 		buf_burn(buf);
 		buf_free(buf);
@@ -69,8 +69,11 @@ int readhostkey(const char * filename, sign_key * hostkey,
 			return DROPBEAR_FAILURE;
 		}
 		return DROPBEAR_SUCCESS;
-	}
+#else
+		dropbear_log(LOG_ERR, "OpenSSH hostkey detected, can't load (compile with make OPENSSHHOSTKEYLOAD=1 to load): %s", filename);
+		goto out;
 #endif
+	}
 	buf_setpos(buf, 0);
 
 	addrandom(buf_getptr(buf, buf->len), buf->len);
