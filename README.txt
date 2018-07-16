@@ -4,6 +4,7 @@ pts-dropbear is a C source tree of the Dropbear embedded SSH server, client
 and tools for Unix, with modifications by pts.
 
 Based on: dropbear-2017.75.tar.bz2
+https://matt.ucc.asn.au/dropbear/releases/dropbear-2017.75.tar.bz2
 
 The most important improvements in pts-dropbear:
 
@@ -16,19 +17,42 @@ The most important improvements in pts-dropbear:
 * Added flag to dropbearkey to generate private keys in OpenSSH format
   directly (dropbearkey -Z openssh, with `make WRITEOPENSSHKEYS=1').
 * Improved some command-line flags (e.g. dropbear -E is always available).
-* Compilation instructions for pts-xstatic (statically linked i386 Linux
+* Added compilation instructions for pts-xstatic (statically linked i386 Linux
   binary). Binary size is 350456 bytes.
 * Added option to compile without loading any system hostkeys (e.g. from
   /etc/dropbear) (with `make NOSYSHOSTKEYLOAD=1').
-* Made dropbearkey behavior is more compatible with ssh-keygen in OpenSSH:
+* Made dropbearkey behavior  more compatible with ssh-keygen in OpenSSH:
 ** dropbearkey now creates a .pub file.
 ** -b bits flag.
-** -C comment flag. (The comment will be added to the public key file, and
+** -C comment flag. (The comment will be added only to the public key file, and
    not to the private key file.)
 ** -P passphrase flag. Only the empty passhprase is allowed.
 ** -N passphrase flag. Only the empty passhprase is allowed.
 * Added autodection of the input private key file format, as
   `dropbearconvert any'.
+
+How to compile:
+
+* To compile regularly with the system gcc, run this (without the leading
+  `$' signs):
+
+    $ sudo apt-get install gcc make
+    $ ./configure
+    $ make PROGRAMS="dropbear dbclient dropbearkey dropbearconvert scp" MULTI=1 STATIC=1 SCPPROGRESS=1 NOSYSHOSTKEYLOAD=1 OPENSSHHOSTKEYLOAD=1 WRITEOPENSSHKEYS=1
+    $ ls -l dropbearmulti
+
+* To compile with pts-xstatic to get a statically linked Linux i386
+  executable binary, run this (without the leading `$' signs) on a Linux
+  i386 or amd64 system:
+
+    $ sudo apt-get install gcc make
+    $ sudo apt-get install gcc-multilib  # On an amd64 system.
+    $ wget http://pts.50.hu/files/pts-xstatic/pts-xstatic-latest.sfx.7z
+    $ chmod u+x pts-xstatic-latest.sfx.7z
+    $ ./pts-xstatic-latest.sfx.7z -y
+    $ XSTATIC=pts-xstatic/bin/xstatic ./c.sh
+    ...
+    (creates drobpearmulti)
 
 How to generate an ssh-ed25519 server host key:
 
@@ -36,8 +60,9 @@ How to generate an ssh-ed25519 server host key:
 
     $ dropbearkey -Z openssh -t ed25519 -f dropbear_hostkey_ed25519
 
-  Please note that `-Z openssh' is optional. It creates the private key file
-  in the OpenSSH format, for improved interoperability.
+  Please note that `-Z openssh' is optional. By default it creates the
+  private key file in the OpenSSH format, for improved interoperability. The
+  alternative is `-Z dropbear'.
 
 * Alternatively, this command works if you have OpenSSH:
 
@@ -48,7 +73,7 @@ How to generate an ssh-ed25519 server host key:
 
   Example invocation:
 
-    $ ./py_ssh_keygen_ed25519.py -t ed25519 -Z dropbear -f dropbear_hostkey_ed25519
+    $ ./py_ssh_keygen_ed25519.py -t ed25519 -Z openssh -f dropbear_hostkey_ed25519
 
 TODO:
 
