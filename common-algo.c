@@ -153,6 +153,9 @@ algo_type sshciphers[] = {
 	{"twofish128-ctr", 0, &dropbear_twofish128, 1, &dropbear_mode_ctr},
 #endif
 #endif /* DROPBEAR_TWOFISH_CTR */
+#ifdef DROPBEAR_3DES
+	{"3des-ctr", 0, &dropbear_3des, 1, &dropbear_mode_ctr},
+#endif
 #endif /* DROPBEAR_ENABLE_CTR_MODE */
 
 #ifdef DROPBEAR_ENABLE_CBC_MODE
@@ -168,9 +171,6 @@ algo_type sshciphers[] = {
 #endif
 #ifdef DROPBEAR_TWOFISH128
 	{"twofish128-cbc", 0, &dropbear_twofish128, 1, &dropbear_mode_cbc},
-#endif
-#ifdef DROPBEAR_3DES
-	{"3des-ctr", 0, &dropbear_3des, 1, &dropbear_mode_ctr},
 #endif
 #ifdef DROPBEAR_3DES
 	{"3des-cbc", 0, &dropbear_3des, 1, &dropbear_mode_cbc},
