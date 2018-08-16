@@ -490,7 +490,7 @@ static void loadhostkey(const char *keyfile, int fatal_duplicate) {
 #endif
 #endif /* DROPBEAR_ECDSA */
 
-#ifdef DROPBEAR_DSS
+#ifdef DROPBEAR_ED25519
 	if (type == DROPBEAR_SIGNKEY_ED25519) {
 		loadhostkey_helper("ed25519", (void**)&read_key->ed25519key, (void**)&svr_opts.hostkey->ed25519key, fatal_duplicate);
 	}
