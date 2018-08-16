@@ -65,11 +65,13 @@ static const struct dropbear_cipher dropbear_aes128 =
 static const struct dropbear_cipher dropbear_blowfish = 
 	{&blowfish_desc, 16, 8};
 #endif
-#ifdef DROPBEAR_TWOFISH256
+/* Long #if to pacify gcc-7.3 -Werror=unused-const-variable */
+#if defined(DROPBEAR_TWOFISH256) && ((defined(DROPBEAR_ENABLE_CTR_MODE) && defined(DROPBEAR_TWOFISH_CTR)) || defined(DROPBEAR_ENABLE_CBC_MODE))
 static const struct dropbear_cipher dropbear_twofish256 = 
 	{&twofish_desc, 32, 16};
 #endif
-#ifdef DROPBEAR_TWOFISH128
+/* Long #if to pacify gcc-7.3 -Werror=unused-const-variable */
+#if defined(DROPBEAR_TWOFISH128) && ((defined(DROPBEAR_ENABLE_CTR_MODE) && defined(DROPBEAR_TWOFISH_CTR)) || defined(DROPBEAR_ENABLE_CBC_MODE))
 static const struct dropbear_cipher dropbear_twofish128 = 
 	{&twofish_desc, 16, 16};
 #endif
